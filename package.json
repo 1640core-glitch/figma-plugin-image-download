@@ -1,0 +1,15 @@
+{
+  "name": "figma-plugin-image-download",
+  "version": "0.1.0",
+  "scripts": {
+    "build": "tsc --noEmit -p tsconfig.code.json && tsc --noEmit -p tsconfig.ui.json && node esbuild.config.mjs",
+    "watch": "node esbuild.config.mjs --watch"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@figma/plugin-typings": "1.123.0",
+    "esbuild": "0.24.0",
+    "jszip": "3.10.1",
+    "typescript": "5.7.3"
+  }
+}

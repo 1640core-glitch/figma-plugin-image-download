@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'" />
+  <title>Image Downloader</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      width: 360px;
+      padding: 16px;
+      font-family: Inter, system-ui, sans-serif;
+      font-size: 13px;
+      background: #2c2c2c;
+      color: #ffffff;
+    }
+
+    #selection-info {
+      background: #383838;
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin-bottom: 14px;
+      font-size: 12px;
+      color: #888888;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .description {
+      font-size: 12px;
+      color: #aaa;
+      line-height: 1.5;
+      margin-bottom: 14px;
+    }
+
+    .format-section {
+      background: #383838;
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin-bottom: 14px;
+    }
+
+    .section-label {
+      font-size: 12px;
+      color: #aaaaaa;
+      margin-bottom: 8px;
+    }
+
+    .radio-group {
+      display: flex;
+      gap: 16px;
+    }
+
+    .radio-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      color: #ffffff;
+    }
+
+    .radio-label input[type="radio"] {
+      accent-color: #0d99ff;
+      cursor: pointer;
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+    }
+
+    #quality-row {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    #quality-row span {
+      font-size: 12px;
+      color: #aaaaaa;
+      white-space: nowrap;
+    }
+
+    #quality-input {
+      flex: 1;
+      accent-color: #0d99ff;
+      cursor: pointer;
+    }
+
+    #quality-display {
+      font-size: 12px;
+      color: #ffffff;
+      min-width: 28px;
+      text-align: right;
+    }
+
+    .option-row {
+      margin-bottom: 14px;
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      color: #aaaaaa;
+    }
+
+    .checkbox-label input[type="checkbox"] {
+      accent-color: #0d99ff;
+      cursor: pointer;
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+    }
+
+    #export-btn {
+      width: 100%;
+      padding: 10px 0;
+      background: #0d99ff;
+      color: #ffffff;
+      border: none;
+      border-radius: 6px;
+      font-family: Inter, system-ui, sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    #export-btn:hover:not(:disabled) { background: #1aa3ff; }
+    #export-btn:active:not(:disabled) { background: #0a85e0; }
+    #export-btn:disabled { opacity: 0.5; cursor: default; }
+
+    #cancel-btn {
+      width: 100%;
+      padding: 10px 0;
+      background: #555555;
+      color: #ffffff;
+      border: none;
+      border-radius: 6px;
+      font-family: Inter, system-ui, sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: none;
+      transition: background 0.15s;
+    }
+    #cancel-btn:hover:not(:disabled) { background: #6a6a6a; }
+    #cancel-btn:active:not(:disabled) { background: #444444; }
+    #cancel-btn:disabled { opacity: 0.5; cursor: default; }
+
+    #phase-label {
+      margin-top: 8px;
+      font-size: 11px;
+      color: #888888;
+      min-height: 14px;
+    }
+
+    #status {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #aaaaaa;
+      min-height: 16px;
+      word-break: break-word;
+    }
+
+    #progress-bar {
+      width: 100%;
+      height: 4px;
+      background: #444444;
+      border-radius: 2px;
+      margin-top: 8px;
+      display: none;
+    }
+
+    #progress-bar-fill {
+      height: 100%;
+      background: #0d99ff;
+      border-radius: 2px;
+      width: 0%;
+      transition: width 0.2s;
+    }
+  </style>
+</head>
+<body>
+  <div id="selection-info">フレームを選択してください</div>
+
+  <div class="description">
+    選択したフレーム内の非表示でない画像を一括でZIPダウンロードします。フレーム名ごとにフォルダ分けされます。
+  </div>
+
+  <div class="format-section">
+    <div class="section-label">出力フォーマット</div>
+    <div class="radio-group">
+      <label class="radio-label">
+        <input type="radio" name="format" value="original" checked />
+        <span>Original</span>
+      </label>
+      <label class="radio-label">
+        <input type="radio" name="format" value="png" />
+        <span>PNG</span>
+      </label>
+      <label class="radio-label">
+        <input type="radio" name="format" value="jpg" />
+        <span>JPG</span>
+      </label>
+    </div>
+    <div id="quality-row">
+      <span>品質</span>
+      <input id="quality-input" type="range" min="0.1" max="1.0" step="0.1" value="0.8" />
+      <span id="quality-display">0.8</span>
+    </div>
+  </div>
+
+  <div class="option-row">
+    <label class="checkbox-label">
+      <input type="checkbox" id="dedup-checkbox" checked />
+      <span>重複排除（同じ画像を1つにまとめる）</span>
+    </label>
+  </div>
+
+  <button id="export-btn" disabled>画像をダウンロード</button>
+  <button id="cancel-btn">キャンセル</button>
+  <div id="progress-bar"><div id="progress-bar-fill"></div></div>
+  <div id="phase-label"></div>
+  <div id="status"></div>
+</body>
+</html>
